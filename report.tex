@@ -1,0 +1,49 @@
+\documentclass{report}
+\usepackage[margin=2cm]{geometry}
+\usepackage{amsmath}
+\usepackage{algpseudocode}
+
+\title{Borukva's Algorithm}
+\author{}
+\begin{document}
+\maketitle
+
+\section{Principles Of Boruvka's Algorithm}
+Borukva's algorithm is a greedy algorithm to find the minimum spanning tree (MST) of a given graph.
+It does this by first finding the minimum cost edge for each node in the graph, if two nodes share the same minimum cost edge they are connected into their tree.
+Once you have done that for all nodes in your graph you will have many smaller trees.
+Then, for all your trees that you have just made you find the minimum cost edge that is connected to another one of your trees, creating a smaller amount of larger trees.
+You repeat this step until you have only one tree remaining.
+The one remaining tree will be your MST.
+
+The main advantage of Borvuka's algorithm over something l Kruskal's algorithm is that i can be parallelised easily, this is because each node finds its own minimum cost edge independantly of all other nodes because they do not consider where the edge is going, only that it is the minimum.
+With this knowledge we can give a each thread a node and all its connected edges and compute the minimum cost egde of each node simultaneously.
+This makes the algorithm very scaleable and good for large graphs.
+
+\section{Pseudo Code}
+
+\caption{Borukva's Algorithm}
+
+\begin{algorithmic}
+    \State $ Inputs: A graph G with set of vertices V and edges E $
+    \State $ Output: The minimum spanning tree of graph G $
+
+    \State $ V_{T} \gets V $
+    \State $ E_{T} \gets 0 $
+    
+    \While{$ |V_{T}| > 1 $}
+        \For {$ T in V_{T} $}
+            \State {$ M_{n} \gets 0 $}
+            \For{$ N in T & $}
+                \State $ M_{n} \gets \texit{append}(\texit{minCostOutboundEdge}(N)) $
+            \EndFor
+            %\State $ M \gets \texit{min}(M_{n}) $
+            \State $ \texit{append}(E_{T}, \texit{min}(M_{n})) $
+        \State $ V_{T} \gets \texit{combineTrees}(V_{T}, E_{T}) $
+        \EndFor
+    \EndWhile
+
+    \State $ \texit{return} V_{T}, E_{T} $
+\end{algorithmic}
+
+\end{document}
