@@ -69,16 +69,18 @@ def borukva(vertices : set, edges : set):
         for tree in vt:
             mn = []
             for node in tree:
-                mn.append(min_cost_edge(node, vt, edges))
+                mce = min_cost_edge(node, vt, edges)
+                if mce:
+                    mn.append(mce)
+            print(mn)
             mn.sort(key=lambda x : x[2])
             minimum = mn[0]
             et.add(minimum)
-            print(vt)
             vt = combine_trees(vt, minimum)
 
     return (vt, et)
 
-def plot_graph(edges):
+def plot_graph(edges, mst_edges):
     pyplot.clf()
     G = networkx.Graph()
 
@@ -89,10 +91,15 @@ def plot_graph(edges):
         G.add_edge(e[0], e[1], weight=e[2])
         all_edges.append((e[0], e[1]))
 
+    mst = []
+    for e in mst_edges:
+        mst.append((e[0], e[1]))
+
     pos = networkx.spring_layout(G, k=2)
     edge_labels = dict([((u, v,), d['weight']) for u, v, d in G.edges(data=True)])
     networkx.draw_networkx_nodes(G, pos, node_size=300)
-    networkx.draw_networkx_edges(G, pos, edgelist=all_edges)
+    networkx.draw_networkx_edges(G, pos, edgelist=all_edges, style="dashed")
+    networkx.draw_networkx_edges(G, pos, edgelist=mst_edges, width=3, style="dashed", edge_color="red")
 
     networkx.draw_networkx_labels(G, pos)
     networkx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
@@ -106,4 +113,4 @@ mst = borukva(vertices, edges)
 print(mst[0])
 print(mst[1])
 
-plot_graph(mst[1])
+plot_graph(edges, mst[1])
