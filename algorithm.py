@@ -1,6 +1,10 @@
 import sys
+import threading
+import time
 import networkx
+import matplotlib
 from matplotlib import pyplot
+matplotlib.use("tkAgg")
 
 def load_graph(filepath):
     with open(filepath) as f:
@@ -72,7 +76,43 @@ def borukva(vertices : set, edges : set):
                 mce = min_cost_edge(node, vt, edges)
                 if mce:
                     mn.append(mce)
-            print(mn)
+            mn.sort(key=lambda x : x[2])
+            minimum = mn[0]
+            et.add(minimum)
+            vt = combine_trees(vt, minimum)
+
+    return (vt, et)
+
+def borukva_threaded(vertices : set, edges : set):
+    #vt = vertices # trees in the algorithm
+    global lock
+    vt = []
+    for v in vertices:
+        vt.append(frozenset(v))
+    et = set() # edges in the MST
+    lock = False
+
+    def find_mce(node, mn):
+        global lock
+        mce = min_cost_edge(node, vt, edges)
+        if mce:
+            while True:
+                if lock:
+                    continue
+                lock = True
+                mn.append(mce)
+                lock = False
+                break
+
+    while len(vt) > 1:
+        for tree in vt:
+            mn = []
+            threads = []
+            for node in tree:
+                threads.append(t := threading.Thread(target=find_mce(node, mn)))
+                t.start()
+            for t in threads:
+                t.join()
             mn.sort(key=lambda x : x[2])
             minimum = mn[0]
             et.add(minimum)
@@ -107,10 +147,32 @@ def plot_graph(edges, mst_edges):
     pyplot.axis('off')
     pyplot.show()
 
-vertices, edges = load_graph("mst-example-2.csv")
-print(vertices)
-mst = borukva(vertices, edges)
-print(mst[0])
-print(mst[1])
+if __name__ == "__main__":
+    graphic = False
+    for arg in sys.argv:
+        if arg == '-g' or arg == '--graphic':
+            matplotlib.use("tkAgg") # set the backend for matplotlib to tk
+            graphic = True
 
-plot_graph(edges, mst[1])
+    vertices, edges = load_graph("mst-example-2.csv") # load in the graph file
+    print(vertices)
+
+    start_threaded = time.time()
+    mst = borukva_threaded(vertices, edges) # paralelised algorithm
+    end_threaded = time.time()
+
+    print("min spanning tree 1 ====================")
+    print(mst[1])
+
+    start_single = time.time()
+    mst = borukva(vertices, edges) # single threaded algorithm
+    end_single = time.time()
+
+    print("min spanning tree 2 ======================")
+    print(mst[1])
+
+    print("time threaded: ", end_threaded - start_threaded)
+    print("time without threading: ", end_single - start_single)
+
+    if graphic:
+        plot_graph(edges, mst[1])
