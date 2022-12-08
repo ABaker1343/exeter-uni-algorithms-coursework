@@ -75,8 +75,7 @@ def borukva(vertices : set, edges : set):
                 mce = min_cost_edge(node, vt, edges)
                 if mce:
                     mn.append(mce)
-            min(mn, key=lambda x : x[2])
-            minimum = mn[0]
+            minimum = min(mn, key=lambda x : x[2])
             et.add(minimum)
             vt = combine_trees(vt, minimum)
 
@@ -112,8 +111,59 @@ def borukva_threaded(vertices : set, edges : set):
                 t.start()
             for t in threads:
                 t.join()
-            min(mn, key=lambda x : x[2])
-            minimum = mn[0]
+            minimum = min(mn, key=lambda x : x[2])
+            et.add(minimum)
+            vt = combine_trees(vt, minimum)
+
+    return (vt, et)
+
+def borukva_threaded_optimised(vertices : set, edges : set):
+    #vt = vertices # trees in the algorithm
+    global lock
+    vt = []
+    for v in vertices:
+        vt.append(frozenset([v]))
+    et = set() # edges in the MST
+    lock = False
+
+    def chunks(s : set, n):
+        i = 0
+        set_i = 0
+        setlist = [set()] * n
+        for item in s:
+            if i > len(s) / n:
+                i = 0
+                set_i += 1
+            setlist[set_i].add(item)
+        return setlist
+
+
+    def find_mce(chunk, mn):
+        global lock
+        lowest = (0, 0, sys.float_info.max)
+        for node in chunk:
+            mce = min_cost_edge(node, vt, edges)
+            if mce and mce[2] < lowest[2]:
+                lowest = mce
+        while True:
+            if lock:
+                continue
+            else:
+                lock = True
+                mn.append(lowest)
+                lock = False
+                break
+
+    while len(vt) > 1:
+        for tree in vt:
+            mn = []
+            threads = []
+            for chunk in chunks(tree, 1):
+                threads.append(t := threading.Thread(target=find_mce(chunk, mn)))
+                t.start()
+            for t in threads:
+                t.join()
+            minimum = min(mn, key=lambda x : x[2])
             et.add(minimum)
             vt = combine_trees(vt, minimum)
 
@@ -174,8 +224,17 @@ if __name__ == "__main__":
     print(" min spanning tree single-threaded ".center(70,'='))
     print(mst[1])
 
+    print("starting optmised threaded run")
+    start_threaded_optimised = time.time()
+    mst = borukva_threaded_optimised(vertices, edges) # single threaded algorithm
+    end_threaded_optimised = time.time()
+
+    print(" min spanning tree threaded optimised".center(70,'='))
+    print(mst[1])
+
     print("time threaded: ", end_threaded - start_threaded)
     print("time without threading: ", end_single - start_single)
+    print("time with optimised threading: ", end_threaded_optimised - start_threaded_optimised)
 
     if graphic:
         plot_graph(edges, mst[1])
