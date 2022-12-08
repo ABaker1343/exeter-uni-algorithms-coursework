@@ -4,7 +4,6 @@ import time
 import networkx
 import matplotlib
 from matplotlib import pyplot
-matplotlib.use("tkAgg")
 
 def load_graph(filepath):
     with open(filepath) as f:
@@ -66,7 +65,7 @@ def borukva(vertices : set, edges : set):
     #vt = vertices # trees in the algorithm
     vt = []
     for v in vertices:
-        vt.append(frozenset(v))
+        vt.append(frozenset([v]))
     et = set() # edges in the MST
 
     while len(vt) > 1:
@@ -88,7 +87,7 @@ def borukva_threaded(vertices : set, edges : set):
     global lock
     vt = []
     for v in vertices:
-        vt.append(frozenset(v))
+        vt.append(frozenset([v]))
     et = set() # edges in the MST
     lock = False
 
@@ -139,7 +138,7 @@ def plot_graph(edges, mst_edges):
     edge_labels = dict([((u, v,), d['weight']) for u, v, d in G.edges(data=True)])
     networkx.draw_networkx_nodes(G, pos, node_size=300)
     networkx.draw_networkx_edges(G, pos, edgelist=all_edges, style="dashed")
-    networkx.draw_networkx_edges(G, pos, edgelist=mst_edges, width=3, style="dashed", edge_color="red")
+    networkx.draw_networkx_edges(G, pos, edgelist=mst_edges, width=3, edge_color="red")
 
     networkx.draw_networkx_labels(G, pos)
     networkx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
@@ -151,12 +150,15 @@ if __name__ == "__main__":
     graphic = False
     for arg in sys.argv:
         if arg == '-g' or arg == '--graphic':
-            matplotlib.use("tkAgg") # set the backend for matplotlib to tk
             graphic = True
+            try:
+                matplotlib.use("tkAgg") # set the backend for matplotlib to tk
+            except:
+                matplotlib.use("qtagg")
 
-    vertices, edges = load_graph("data/mst-example-2.csv") # load in the graph file
-    print(vertices)
+    vertices, edges = load_graph("data/mst-generated.csv") # load in the graph file
 
+    print("starting threaded run")
     start_threaded = time.time()
     mst = borukva_threaded(vertices, edges) # paralelised algorithm
     end_threaded = time.time()
@@ -164,6 +166,7 @@ if __name__ == "__main__":
     print(" min spanning tree multi-threaded ".center(70,'='))
     print(mst[1])
 
+    print("starting serial run")
     start_single = time.time()
     mst = borukva(vertices, edges) # single threaded algorithm
     end_single = time.time()
