@@ -1,6 +1,7 @@
 import sys
 import threading
 import time
+from matplotlib._api import caching_module_getattr
 import networkx
 import matplotlib
 from matplotlib import pyplot
@@ -232,7 +233,7 @@ if __name__ == "__main__":
 
     print("starting optmised threaded run")
     start_threaded_optimised = time.time()
-    mst = borukva_threaded_optimised(vertices, edges) # single threaded algorithm
+    #mst = borukva_threaded_optimised(vertices, edges) # single threaded algorithm
     end_threaded_optimised = time.time()
 
     print(" min spanning tree threaded optimised".center(70,'='))

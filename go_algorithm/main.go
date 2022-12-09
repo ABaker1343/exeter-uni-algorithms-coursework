@@ -1,11 +1,13 @@
 package main
 
 import (
-    "os"
-    "fmt"
-    "strings"
-    "strconv"
-    "math"
+	"fmt"
+	"math"
+	"os"
+	"reflect"
+	"strconv"
+	"strings"
+    "time"
 )
 
 type edge struct {
@@ -15,8 +17,9 @@ type edge struct {
 }
 
 type set map[string]bool
+type edgeSet map[edge]bool
 
-func loadGraph(filepath string) (set, []edge) {
+func loadGraph(filepath string) (set, edgeSet) {
     data, err := os.ReadFile(filepath)
     if err != nil {
         panic("failed to read file")
@@ -26,7 +29,7 @@ func loadGraph(filepath string) (set, []edge) {
     lines := strings.Split(content, "\n")
 
     vertices := make(set)
-    edges := make([]edge, 0)
+    edges := make(edgeSet, 0)
 
     for _, l := range lines {
         fmt.Println(l)
@@ -40,60 +43,113 @@ func loadGraph(filepath string) (set, []edge) {
         if err != nil {
             panic("failed to parse float")
         }
-        edges = append(edges, edge{splits[0], splits[1], cost})
+        //edges = append(edges, edge{splits[0], splits[1], cost})
+        edges[edge{splits[0], splits[1], cost}] = true
         
     }
 
     return vertices, edges
 }
 
-func getCheapestEdge(node string, edges *[]edge) edge {
+func getCheapestEdge(node string, edges *edgeSet, vt *[]set) edge {
     cheapest := edge{"", "", math.MaxFloat64}
-    for _, e := range *edges {
+    for e := range *edges {
         if strings.Compare(e.node1, node) == 0 || strings.Compare(e.node2, node) == 0 {
             if e.cost < cheapest.cost {
-                cheapest = e
+                same := false
+                for _, v := range *vt {
+                    if v[e.node1] && v[e.node2] {
+                        same = true
+                        break
+                    }
+                }
+                if !same {
+                    cheapest = e
+                }
             }
         }
     }
     return cheapest
 }
 
-func combineTrees(vt *[]set, e edge) {
+func union(set1 set, set2 set) set {
+    newSet := set1
+    for k := range set2 {
+        newSet[k] = true
+    }
+    return newSet
 }
 
-func borukva(vertices set, edges []edge) []edge {
+func remove(slice *[]set, s set) {
+    for i, v := range *slice {
+        if reflect.DeepEqual(v, s) {
+            (*slice)[i] = (*slice)[len(*slice) - 1]
+            *slice = (*slice)[:len(*slice) - 1]
+        }
+    }
+}
+
+func combineTrees(vt *[]set, e edge) {
+    var tree1 set
+    var tree2 set
+
+    for _, tree := range *vt {
+        if tree[e.node1] {
+            tree1 = tree
+        } else if tree[e.node2] {
+            tree2 = tree
+        }
+    }
+
+    remove(vt, tree1)
+    remove(vt, tree2)
+    newTree := union(tree1, tree2)
+    *vt = append(*vt, newTree)
+}
+
+func borukva(vertices set, edges edgeSet) map[edge]bool {
     vt := make([]set, 0) // slice of sets
     for v := range vertices {
         new_set := make(set)
         new_set[v] = true
         vt = append(vt, new_set)
     }
-    et := make([]edge, 0) // start with empty slice of edges
+    //et := make([]edge, 0) // start with empty slice of edges
+    et := make(map[edge]bool)
 
-    for _, tree := range vt { // for each tree in the list of trees
+    for len(vt) > 1 {
         minimum := edge{"", "", math.MaxFloat64}
-        for node := range tree { // for each key in the tree
-            // find the cheapest edge connecting out of the tree
-            cheapest := getCheapestEdge(node, &edges)
-            if strings.Compare(cheapest.node1, "") != 0 {
-                if cheapest.cost < minimum.cost {
-                    minimum = cheapest
+        for _, tree := range vt { // for each tree in the list of trees
+            for node := range tree { // for each key in the tree
+                // find the cheapest edge connecting out of the tree
+                cheapest := getCheapestEdge(node, &edges, &vt)
+                if strings.Compare(cheapest.node1, "") != 0 {
+                    if cheapest.cost < minimum.cost {
+                        minimum = cheapest
+                    }
                 }
             }
-        combineTrees(&vt, minimum)
-        et = append(et, minimum)
+            if minimum.cost != math.MaxFloat64 {
+                combineTrees(&vt, minimum)
+                //et = append(et, minimum)
+                et[minimum] = true
+                delete(edges, minimum)
+                //time.Sleep(5 * time.Second)
+                break
+            }
         }
     }
-
-
-
-
 
     return et
 }
 
 func main() {
-    vertices, edges := loadGraph("../data/mst-example-2.csv")
-    fmt.Println(vertices, edges)
+    vertices, edges := loadGraph("../data/mst-generated.csv")
+    startTime := time.Now()
+    mst := borukva(vertices, edges)
+    elapsed := time.Since(startTime)
+    for e := range mst {
+        fmt.Println(e)
+    }
+    fmt.Println("time taken: ", elapsed)
 }
