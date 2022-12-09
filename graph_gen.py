@@ -1,7 +1,7 @@
 import sys
 import random
 
-def generate_graph(_num_nodes=26, _connection_chance=1):
+def generate_graph(_num_nodes=26, _connection_chance=0.7):
     node_names = []
     edges = set()
     for i in range(_num_nodes):

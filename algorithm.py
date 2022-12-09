@@ -70,12 +70,14 @@ def borukva(vertices : set, edges : set):
 
     while len(vt) > 1:
         for tree in vt:
-            mn = []
+            minimum = (None, None, sys.float_info.max)
+            #mn = []
             for node in tree:
                 mce = min_cost_edge(node, vt, edges)
-                if mce:
-                    mn.append(mce)
-            minimum = min(mn, key=lambda x : x[2])
+                if mce and mce[2] < minimum[2]:
+                    #mn.append(mce)
+                    minimum = mce
+            #minimum = min(mn, key=lambda x : x[2])
             et.add(minimum)
             vt = combine_trees(vt, minimum)
 
@@ -84,34 +86,36 @@ def borukva(vertices : set, edges : set):
 def borukva_threaded(vertices : set, edges : set):
     #vt = vertices # trees in the algorithm
     global lock
+    global minimum
     vt = []
     for v in vertices:
         vt.append(frozenset([v]))
     et = set() # edges in the MST
     lock = False
 
-    def find_mce(node, mn):
+    def find_mce(node):
         global lock
+        global minimum
         mce = min_cost_edge(node, vt, edges)
         if mce:
             while True:
                 if lock:
                     continue
                 lock = True
-                mn.append(mce)
+                if mce[2] < minimum[2]:
+                    minimum = mce
                 lock = False
                 break
 
     while len(vt) > 1:
         for tree in vt:
-            mn = []
+            minimum = (None, None, sys.float_info.max)
             threads = []
             for node in tree:
-                threads.append(t := threading.Thread(target=find_mce(node, mn)))
+                threads.append(t := threading.Thread(target=find_mce(node)))
                 t.start()
             for t in threads:
                 t.join()
-            minimum = min(mn, key=lambda x : x[2])
             et.add(minimum)
             vt = combine_trees(vt, minimum)
 
@@ -120,6 +124,7 @@ def borukva_threaded(vertices : set, edges : set):
 def borukva_threaded_optimised(vertices : set, edges : set):
     #vt = vertices # trees in the algorithm
     global lock
+    global minimum
     vt = []
     for v in vertices:
         vt.append(frozenset([v]))
@@ -138,8 +143,9 @@ def borukva_threaded_optimised(vertices : set, edges : set):
         return setlist
 
 
-    def find_mce(chunk, mn):
+    def find_mce(chunk):
         global lock
+        global minimum
         lowest = (0, 0, sys.float_info.max)
         for node in chunk:
             mce = min_cost_edge(node, vt, edges)
@@ -150,20 +156,20 @@ def borukva_threaded_optimised(vertices : set, edges : set):
                 continue
             else:
                 lock = True
-                mn.append(lowest)
+                if lowest[2] < minimum[2]:
+                    minimum = lowest
                 lock = False
                 break
 
     while len(vt) > 1:
         for tree in vt:
-            mn = []
+            minimum = (None, None, sys.float_info.max)
             threads = []
-            for chunk in chunks(tree, 1):
-                threads.append(t := threading.Thread(target=find_mce(chunk, mn)))
+            for chunk in chunks(tree, 4):
+                threads.append(t := threading.Thread(target=find_mce(chunk)))
                 t.start()
             for t in threads:
                 t.join()
-            minimum = min(mn, key=lambda x : x[2])
             et.add(minimum)
             vt = combine_trees(vt, minimum)
 
