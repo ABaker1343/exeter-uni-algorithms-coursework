@@ -14,6 +14,8 @@ def load_graph(filepath):
     for line in content.split("\n"):
         if not line: continue
         splits = line.split(',')
+        if len(splits) < 3:
+            break
         vertices.add(splits[0]) # first node
         vertices.add(splits[1]) # second node
         edges.add((splits[0], splits[1], float(splits[2]))) # edge
@@ -205,6 +207,7 @@ def plot_graph(edges, mst_edges):
 
 if __name__ == "__main__":
     graphic = False
+    filepath = sys.argv[1]
     for arg in sys.argv:
         if arg == '-g' or arg == '--graphic':
             graphic = True
@@ -213,7 +216,7 @@ if __name__ == "__main__":
             except:
                 matplotlib.use("qtagg")
 
-    vertices, edges = load_graph("data/mst-generated.csv") # load in the graph file
+    vertices, edges = load_graph(filepath) # load in the graph file
 
     print("starting threaded run")
     start_threaded = time.time()

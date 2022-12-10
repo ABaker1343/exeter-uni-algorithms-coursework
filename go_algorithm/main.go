@@ -107,6 +107,66 @@ func combineTrees(vt *[]set, e edge) {
     *vt = append(*vt, newTree)
 }
 
+func getCheapestEdgeThread(node string, edges *edgeSet, vt *[]set, com chan edge) {
+    cheapest := edge{"", "", math.MaxFloat64}
+    for e := range *edges {
+        if strings.Compare(e.node1, node) == 0 || strings.Compare(e.node2, node) == 0 {
+            if e.cost < cheapest.cost {
+                same := false
+                for _, v := range *vt {
+                    if v[e.node1] && v[e.node2] {
+                        same = true
+                        break
+                    }
+                }
+                if !same {
+                    cheapest = e
+                }
+            }
+        }
+    }
+    com <- cheapest
+}
+
+func borukvaThreaded(vertices set, edges edgeSet) map[edge]bool {
+    vt := make([]set, 0) // slice of sets
+    for v := range vertices {
+        new_set := make(set)
+        new_set[v] = true
+        vt = append(vt, new_set)
+    }
+    //et := make([]edge, 0) // start with empty slice of edges
+    et := make(map[edge]bool)
+
+    com := make(chan edge, len(vertices))
+
+    for len(vt) > 1 {
+        for _, tree := range vt { // for each tree in the list of trees
+            threadCount := 0
+            for node := range tree { // for each key in the tree
+                // find the cheapest edge connecting out of the tree
+                go getCheapestEdgeThread(node, &edges, &vt, com)
+                threadCount++
+            }
+            cheapest := edge{"", "", math.MaxFloat64}
+            for i := 0; i < threadCount; i++ {
+                newEdge := <- com
+                if strings.Compare(newEdge.node1, "") != 0 && newEdge.cost < cheapest.cost {
+                    cheapest = newEdge
+                }
+            }
+            if cheapest.cost != math.MaxFloat64 {
+                combineTrees(&vt, cheapest)
+                et[cheapest] = true
+                //delete(edges, cheapest)
+                break
+            }
+        }
+    }
+
+    return et
+}
+
 func borukva(vertices set, edges edgeSet) map[edge]bool {
     vt := make([]set, 0) // slice of sets
     for v := range vertices {
@@ -133,7 +193,7 @@ func borukva(vertices set, edges edgeSet) map[edge]bool {
                 combineTrees(&vt, minimum)
                 //et = append(et, minimum)
                 et[minimum] = true
-                delete(edges, minimum)
+                //delete(edges, minimum)
                 //time.Sleep(5 * time.Second)
                 break
             }
@@ -144,12 +204,26 @@ func borukva(vertices set, edges edgeSet) map[edge]bool {
 }
 
 func main() {
-    vertices, edges := loadGraph("../data/mst-generated.csv")
+    filepath := os.Args[1]
+    vertices, edges := loadGraph(filepath)
     startTime := time.Now()
     mst := borukva(vertices, edges)
     elapsed := time.Since(startTime)
     for e := range mst {
         fmt.Println(e)
     }
-    fmt.Println("time taken: ", elapsed)
+    fmt.Println("starting threaded run")
+    startThreaded := time.Now()
+    mst = borukvaThreaded(vertices, edges)
+    elapsedThreaded := time.Since(startThreaded)
+    for e := range mst {
+        fmt.Println(e)
+    }
+    fmt.Println("time taken in serial: ", elapsed)
+    fmt.Println("time taken in threaded algorithm: ", elapsedThreaded)
+
+
+
+
+
 }
