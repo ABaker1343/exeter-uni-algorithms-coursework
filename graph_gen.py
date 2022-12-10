@@ -13,7 +13,7 @@ def generate_graph(_num_nodes=26, _connection_chance=0.7):
 
     for i in range(_num_nodes - 1):
         for j in range(i + 1, _num_nodes - 1):
-            if random.randint(0, 100) / 100 < _connection_chance:
+            if random.randint(0, 500) / 100 < _connection_chance:
                 # connect the 2 nodes
                 edges.add((node_names[i], node_names[j], random.randint(1,100)))
 
