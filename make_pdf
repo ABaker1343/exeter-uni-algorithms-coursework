@@ -1,0 +1,24 @@
+#!/bin/sh
+echo "making pdf for $1"
+FILE="$1"
+if test -z "$FILE"
+then
+    echo "please specify input file"
+else
+    pdflatex $FILE
+    bibtex $FILE
+    pdflatex $FILE
+    pdflatex $FILE
+    
+    #clean up the other files
+    rm "$FILE.aux"
+    rm "$FILE.out"
+    rm "($FILE)Notes.bib"
+    rm "$FILE.bbl"
+    rm "$FILE.blg"
+    rm "$FILE.log"
+    rm "$FILE.fdb_latexmk"
+    rm "$FILE.fls"
+    rm "$FILE.synctex.tz"
+    
+fi

@@ -7,6 +7,9 @@ import matplotlib
 from matplotlib import pyplot
 
 def load_graph(filepath):
+    """
+    function to create the vertices and edges from a file
+    """
     with open(filepath) as f:
         content = f.read()
     vertices = set()
@@ -23,6 +26,10 @@ def load_graph(filepath):
     return vertices, edges
 
 def min_cost_edge(node, vt, edges):
+    """
+    function that find the edge with the least cost for a given node in a graph
+    the retured edge will always lead outside of the graph or null
+    """
     min_cost = sys.float_info.max
     mce = None
     for e in edges:
@@ -65,6 +72,9 @@ def combine_trees(vertices : list[set], edge : tuple):
     return vertices
 
 def borukva(vertices : set, edges : set):
+    """
+    function to execute the algorithm and return the set of edges for the minimum spanning tree
+    """
     #vt = vertices # trees in the algorithm
     vt = []
     for v in vertices:
@@ -72,10 +82,10 @@ def borukva(vertices : set, edges : set):
     et = set() # edges in the MST
 
     while len(vt) > 1:
-        for tree in vt:
+        for tree in vt: # for each tree in the current list of trees
             minimum = (None, None, sys.float_info.max)
             #mn = []
-            for node in tree:
+            for node in tree: # for each node in that tree find the minimum node leaving the tree
                 mce = min_cost_edge(node, vt, edges)
                 if mce and mce[2] < minimum[2]:
                     #mn.append(mce)
@@ -87,6 +97,9 @@ def borukva(vertices : set, edges : set):
     return (vt, et)
 
 def plot_graph(edges, mst_edges):
+    """
+    function to plot the mst on a graphical graph
+    """
     pyplot.clf()
     G = networkx.Graph()
 
@@ -114,6 +127,9 @@ def plot_graph(edges, mst_edges):
     pyplot.show()
 
 if __name__ == "__main__":
+    """
+    main function
+    """
     graphic = False
     filepath = sys.argv[1]
     for arg in sys.argv:

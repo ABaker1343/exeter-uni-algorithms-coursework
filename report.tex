@@ -2,6 +2,7 @@
 \usepackage[margin=2cm]{geometry}
 \usepackage{amsmath}
 \usepackage{algpseudocode}
+\usepackage{natbib}
 
 \title{Borukva's Algorithm}
 \author{}
@@ -16,7 +17,7 @@ Then, for all your trees that you have just made you find the minimum cost edge 
 You repeat this step until you have only one tree remaining.
 The one remaining tree will be your MST.
 
-The main advantage of Borvuka's algorithm over something l Kruskal's algorithm is that i can be parallelised easily, this is because each node finds its own minimum cost edge independantly of all other nodes because they do not consider where the edge is going, only that it is the minimum.
+The main advantage of Borvuka's algorithm over something like Kruskal's algorithm is that i can be parallelised easily, this is because each node finds its own minimum cost edge independantly of all other nodes because they do not consider where the edge is going, only that it is the minimum.
 With this knowledge we can give a each thread a node and all its connected edges and compute the minimum cost egde of each node simultaneously.
 This makes the algorithm very scaleable and good for large graphs.
 
@@ -46,4 +47,20 @@ This makes the algorithm very scaleable and good for large graphs.
     \State $ \texit{return} V_{T}, E_{T} $
 \end{algorithmic}
 
+\section{Time and Space Complexity}
+The time complexity of Borukva's algorithm is O(E log V) where E is the amount of edges in your graph and V is the amount of vertices in your graph. This is the same as Kruskal's algorithm However as stated earlier Borukva's algorithm has the advantage that you can utilise multiple threads to do your computations in parallel.
+The O(E log V) complexity comes because you have to do O(E) operations to calculate the minimal edge for each node and then connect our two trees. This doesnt have to be computed V times because each time your combine two of your trees your V gets smaller, this means that you only have to compute it log V times.
+In terms of space complexity you only have to store the edges and the vertices as you can update the trees in-place during the algorithm. This gives Borukva's algorithm a space complexity of O(E + V)
+
+\section{Limitations}
+A limitation of this algorithm is that your best performance of the algorithm is going to come from running the algorithm in a parallel context. This means that you have to be aware of potential race conditions of your algorithm and you have to make decisions on where you want to implement the parallelisations. This also means that not all machines will be able to take advantage of this algorithms best performance. This also means in single-threaded contexts other algorithms such as Kruskals algorithm are a better choice because they are simpler and easier to implement and understand.
+
+\section{Applications}
+Borukva's algorithm was originally developed to optimise electrical networks that they has represented as minimum spanning tree problems. the minumum spanning tree was needed for connecting electricity networks together in the czech republic during the first world war and is the earliest known algorithm for computing the minimum spanning tree of a graph. a lot of its modern use and research is surrounding efficient way of paralelising minimum spanning tree problems to get the most performance out of them on modern computers.
+This algorithm is useful for basically any minimum spanning tree problem. An example of where this can be used in a modern context is in computer vision, specifically in feature extraction. Minimum spanning trees can be used after finding edge points in images to connect them and identify features within the image and produce clearer and more simplified, general outputs \cite{SUK1984400} which can be used as a stage in image recognition or other machine learning environments.
+minimum spanning trees can also be used in clustering algorithms by using the longest edges in the MST to identify where clusters are separated. This type of clustering is also very useful as it can capture clusters of all different shapes because the factor that clusters is how close they are to the other datapoints in their cluster and how far they are from datapoints not in their cluster, this means that the shapes produced by MST clustering algorithms can be quite complex \cite{5397966}. This is also a very useful area of machine learning that MSTs can help us to solve and therefore by extension borukva's algorithm to find those MSTs. It's also to Borukva's algorithm's favour that these modern machine learning problems require modern computers that are capable of squeezing the most performance out of borukva's algorithm because they will most likely have multiple processor cores and threads that can be used in the algorithm. and so this algorithm is still continuing to change the world even after almost 100 years.
+
+
+\bibliographystyle{IEEEtran}
+\bibliography{main}
 \end{document}
